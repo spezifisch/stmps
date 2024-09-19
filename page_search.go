@@ -251,6 +251,10 @@ func (s *SearchPage) addArtistToQueue(entity subsonic.Ider) {
 
 	for _, album := range response.Artist.Album {
 		response, err = s.ui.connection.GetAlbum(album.Id)
+		if err != nil {
+			s.logger.PrintError("addArtistToQueue unable to get album artist from server", err)
+			return
+		}
 		sort.Sort(response.Album.Song)
 		for _, e := range response.Album.Song {
 			for _, art := range e.Artists {
