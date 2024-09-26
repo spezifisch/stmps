@@ -301,7 +301,10 @@ func (connection *SubsonicConnection) GetArtist(id string) (*SubsonicResponse, e
 
 func (connection *SubsonicConnection) GetAlbum(id string) (*SubsonicResponse, error) {
 	if cachedResponse, present := connection.directoryCache[id]; present {
-		return &cachedResponse, nil
+		// This is because Albums that were fetched as Directories aren't populated correctly
+		if cachedResponse.Album.Name != "" {
+			return &cachedResponse, nil
+		}
 	}
 
 	query := defaultQuery(connection)

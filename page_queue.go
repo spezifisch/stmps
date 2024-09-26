@@ -6,6 +6,8 @@ package main
 import (
 	"errors"
 	"fmt"
+	"text/template"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -35,15 +37,29 @@ type QueuePage struct {
 	queueList *tview.Table
 	queueData queueData
 
+	songInfo *tview.TextView
+
 	// external refs
 	ui     *Ui
 	logger logger.LoggerInterface
+
+	songInfoTemplate *template.Template
 }
 
 func (ui *Ui) createQueuePage() *QueuePage {
+	tmpl := template.New("song info").Funcs(template.FuncMap{
+		"formatTime": func(i int) string {
+			return fmt.Sprintf("%s", time.Duration(i)*time.Second)
+		},
+	})
+	songInfoTemplate, err := tmpl.Parse(songInfoTemplateString)
+	if err != nil {
+		ui.logger.PrintError("createQueuePage", err)
+	}
 	queuePage := QueuePage{
-		ui:     ui,
-		logger: ui.logger,
+		ui:               ui,
+		logger:           ui.logger,
+		songInfoTemplate: songInfoTemplate,
 	}
 
 	// main table
@@ -75,9 +91,16 @@ func (ui *Ui) createQueuePage() *QueuePage {
 		return nil
 	})
 
+	// Song info
+	queuePage.songInfo = tview.NewTextView()
+	queuePage.songInfo.SetDynamicColors(true).SetScrollable(true).SetBorder(true).SetTitle("Song Info")
+
+	queuePage.queueList.SetSelectionChangedFunc(queuePage.changeSelection)
+
 	// flex wrapper
-	queuePage.Root = tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(queuePage.queueList, 0, 1, true)
+	queuePage.Root = tview.NewFlex().SetDirection(tview.FlexColumn).
+		AddItem(queuePage.queueList, 0, 2, true).
+		AddItem(queuePage.songInfo, 0, 1, false)
 
 	// private data
 	queuePage.queueData = queueData{
@@ -85,6 +108,15 @@ func (ui *Ui) createQueuePage() *QueuePage {
 	}
 
 	return &queuePage
+}
+
+func (q *QueuePage) changeSelection(row, column int) {
+	q.songInfo.Clear()
+	if row >= len(q.queueData.playerQueue) || row < 0 || column < 0 {
+		return
+	}
+	currentSong := q.queueData.playerQueue[row]
+	_ = q.songInfoTemplate.Execute(q.songInfo, currentSong)
 }
 
 func (q *QueuePage) UpdateQueue() {
@@ -158,6 +190,9 @@ func (q *QueuePage) updateQueue() {
 	if queueWasEmpty {
 		q.queueList.ScrollToBeginning()
 	}
+
+	r, c := q.queueList.GetSelection()
+	q.changeSelection(r, c)
 }
 
 // moveSongUp moves the currently selected song up in the queue
@@ -288,3 +323,9 @@ func (q *queueData) GetRowCount() int {
 func (q *queueData) GetColumnCount() int {
 	return queueDataColumns
 }
+
+var songInfoTemplateString = `[blue::b]Title:[-:-:-:-] [green::i]{{.Title}}[-:-:-:-]
+[blue::b]Artist:[-:-:-:-] [::i]{{.Artist}}[-:-:-:-]
+[blue::b]Album:[-:-:-:-] [::i]{{.GetAlbum}}[-:-:-:-]
+[blue::b]Track:[-:-:-:-] [::i]{{.GetTrackNumber}}[-:-:-:-]
+[blue::b]Duration:[-:-:-:-] [::i]{{formatTime .Duration}}[-:-:-:-] `

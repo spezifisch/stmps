@@ -142,12 +142,29 @@ func (ui *Ui) addRandomSongsToQueue(Id string, randomType string) {
 func (ui *Ui) addSongToQueue(entity *subsonic.SubsonicEntity) {
 	uri := ui.connection.GetPlayUrl(entity)
 
+	response, err := ui.connection.GetAlbum(entity.Parent)
+	album := ""
+	if err != nil {
+		ui.logger.PrintError("addSongToQueue", err)
+	} else {
+		switch {
+		case response.Album.Name != "":
+			album = response.Album.Name
+		case response.Album.Title != "":
+			album = response.Album.Title
+		case response.Album.Album != "":
+			album = response.Album.Album
+		}
+	}
+
 	queueItem := &mpvplayer.QueueItem{
-		Id:       entity.Id,
-		Uri:      uri,
-		Title:    entity.GetSongTitle(),
-		Artist:   entity.Artist,
-		Duration: entity.Duration,
+		Id:          entity.Id,
+		Uri:         uri,
+		Title:       entity.GetSongTitle(),
+		Artist:      entity.Artist,
+		Duration:    entity.Duration,
+		Album:       album,
+		TrackNumber: entity.Track,
 	}
 	ui.player.AddToQueue(queueItem)
 }
@@ -155,13 +172,30 @@ func (ui *Ui) addSongToQueue(entity *subsonic.SubsonicEntity) {
 func makeSongHandler(entity *subsonic.SubsonicEntity, ui *Ui, fallbackArtist string) func() {
 	// make copy of values so this function can be used inside a loop iterating over entities
 	id := entity.Id
+	// TODO: Why aren't we doing all of this _inside_ the returned func?
 	uri := ui.connection.GetPlayUrl(entity)
 	title := entity.Title
 	artist := stringOr(entity.Artist, fallbackArtist)
 	duration := entity.Duration
+	track := entity.Track
+
+	response, err := ui.connection.GetAlbum(entity.Parent)
+	album := ""
+	if err != nil {
+		ui.logger.PrintError("makeSongHandler", err)
+	} else {
+		switch {
+		case response.Album.Name != "":
+			album = response.Album.Name
+		case response.Album.Title != "":
+			album = response.Album.Title
+		case response.Album.Album != "":
+			album = response.Album.Album
+		}
+	}
 
 	return func() {
-		if err := ui.player.PlayUri(id, uri, title, artist, duration); err != nil {
+		if err := ui.player.PlayUri(id, uri, title, artist, album, duration, track); err != nil {
 			ui.logger.PrintError("SongHandler Play", err)
 			return
 		}
