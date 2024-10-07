@@ -4,8 +4,15 @@
 package main
 
 import (
+	"bytes"
+	_ "embed"
 	"errors"
 	"fmt"
+	"image"
+	"image/png"
+	"os"
+	"text/template"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -35,15 +42,42 @@ type QueuePage struct {
 	queueList *tview.Table
 	queueData queueData
 
+	songInfo *tview.TextView
+	coverArt *tview.Image
+
 	// external refs
 	ui     *Ui
 	logger logger.LoggerInterface
+
+	songInfoTemplate *template.Template
+}
+
+var STMPS_LOGO image.Image
+
+// init sets up the default image used for songs for which the server provides
+// no cover art.
+func init() {
+	var err error
+	STMPS_LOGO, err = png.Decode(bytes.NewReader(_stmps_logo))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v", err)
+	}
 }
 
 func (ui *Ui) createQueuePage() *QueuePage {
+	tmpl := template.New("song info").Funcs(template.FuncMap{
+		"formatTime": func(i int) string {
+			return fmt.Sprintf("%s", time.Duration(i)*time.Second)
+		},
+	})
+	songInfoTemplate, err := tmpl.Parse(songInfoTemplateString)
+	if err != nil {
+		ui.logger.PrintError("createQueuePage", err)
+	}
 	queuePage := QueuePage{
-		ui:     ui,
-		logger: ui.logger,
+		ui:               ui,
+		logger:           ui.logger,
+		songInfoTemplate: songInfoTemplate,
 	}
 
 	// main table
@@ -75,9 +109,25 @@ func (ui *Ui) createQueuePage() *QueuePage {
 		return nil
 	})
 
+	// Song info
+	queuePage.songInfo = tview.NewTextView()
+	queuePage.songInfo.SetDynamicColors(true).SetScrollable(true)
+
+	queuePage.queueList.SetSelectionChangedFunc(queuePage.changeSelection)
+
+	queuePage.coverArt = tview.NewImage()
+	queuePage.coverArt.SetImage(STMPS_LOGO)
+
+	infoFlex := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(queuePage.songInfo, 0, 1, false).
+		AddItem(queuePage.coverArt, 0, 1, false)
+	infoFlex.SetBorder(true)
+	infoFlex.SetTitle(" song info ")
+
 	// flex wrapper
-	queuePage.Root = tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(queuePage.queueList, 0, 1, true)
+	queuePage.Root = tview.NewFlex().SetDirection(tview.FlexColumn).
+		AddItem(queuePage.queueList, 0, 2, true).
+		AddItem(infoFlex, 0, 1, false)
 
 	// private data
 	queuePage.queueData = queueData{
@@ -85,6 +135,29 @@ func (ui *Ui) createQueuePage() *QueuePage {
 	}
 
 	return &queuePage
+}
+
+func (q *QueuePage) changeSelection(row, column int) {
+	q.songInfo.Clear()
+	if row >= len(q.queueData.playerQueue) || row < 0 || column < 0 {
+		q.coverArt.SetImage(STMPS_LOGO)
+		return
+	}
+	currentSong := q.queueData.playerQueue[row]
+	art := STMPS_LOGO
+	if currentSong.CoverArtId != "" {
+		if nart, err := q.ui.connection.GetCoverArt(currentSong.CoverArtId); err == nil {
+			if nart != nil {
+				art = nart
+			} else {
+				q.logger.Printf("%q cover art %s was unexpectedly nil", currentSong.Title, currentSong.CoverArtId)
+			}
+		} else {
+			q.logger.Printf("error fetching cover art for %s: %v", currentSong.Title, err)
+		}
+	}
+	q.coverArt.SetImage(art)
+	_ = q.songInfoTemplate.Execute(q.songInfo, currentSong)
 }
 
 func (q *QueuePage) UpdateQueue() {
@@ -158,6 +231,9 @@ func (q *QueuePage) updateQueue() {
 	if queueWasEmpty {
 		q.queueList.ScrollToBeginning()
 	}
+
+	r, c := q.queueList.GetSelection()
+	q.changeSelection(r, c)
 }
 
 // moveSongUp moves the currently selected song up in the queue
@@ -288,3 +364,12 @@ func (q *queueData) GetRowCount() int {
 func (q *queueData) GetColumnCount() int {
 	return queueDataColumns
 }
+
+var songInfoTemplateString = `[blue::b]Title:[-:-:-:-] [green::i]{{.Title}}[-:-:-:-]
+[blue::b]Artist:[-:-:-:-] [::i]{{.Artist}}[-:-:-:-]
+[blue::b]Album:[-:-:-:-] [::i]{{.GetAlbum}}[-:-:-:-]
+[blue::b]Track:[-:-:-:-] [::i]{{.GetTrackNumber}}[-:-:-:-]
+[blue::b]Duration:[-:-:-:-] [::i]{{formatTime .Duration}}[-:-:-:-] `
+
+//go:embed docs/stmps_logo.png
+var _stmps_logo []byte
