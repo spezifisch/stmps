@@ -11,7 +11,10 @@ import (
 	"github.com/rivo/tview"
 	"github.com/spezifisch/stmps/logger"
 	"github.com/spezifisch/stmps/mpvplayer"
+	"github.com/spezifisch/stmps/subsonic"
 )
+
+// TODO show total # of entries somewhere (top?)
 
 // columns: star, title, artist, duration
 const queueDataColumns = 4
@@ -65,6 +68,12 @@ func (ui *Ui) createQueuePage() *QueuePage {
 				queuePage.moveSongDown()
 			case 'k':
 				queuePage.moveSongUp()
+			case 's':
+				if len(queuePage.queueData.playerQueue) == 0 {
+					queuePage.logger.Print("no items in queue to save")
+					return nil
+				}
+				queuePage.ui.ShowSelectPlaylist()
 			case 'S':
 				queuePage.shuffle()
 			default:
@@ -218,6 +227,68 @@ func (q *QueuePage) moveSongDown() {
 	q.updateQueue()
 }
 
+// saveQueue persists the current queue as a playlist. It presents the user
+// with a way of choosing the playlist name, and if a playlist with the
+// same name already exists it requires the user to confirm that they
+// want to overwrite the existing playlist.
+//
+// Errors are reported to the user and require confirmation to dismiss,
+// and logged.
+func (q *QueuePage) saveQueue(playlistName string) {
+	// When updating an existing playlist, there are two options:
+	// updatePlaylist, and createPlaylist. createPlaylist on an
+	// existing playlist is a replace function.
+	//
+	// updatePlaylist is more surgical: it can selectively add and
+	// remove songs, and update playlist attributes. It is more
+	// network efficient than using createPlaylist to change an
+	// existing playlist.  However, using it here would require
+	// a more complex diffing algorithm, and much more code.
+	// Consequently, this version of save() uses the more simple
+	// brute-force approach of always using createPlaylist().
+	songIds := make([]string, len(q.queueData.playerQueue))
+	for i, it := range q.queueData.playerQueue {
+		songIds[i] = it.Id
+	}
+
+	var playlistId string
+	for _, p := range q.ui.playlists {
+		if p.Name == playlistName {
+			playlistId = string(p.Id)
+			break
+		}
+	}
+	var response *subsonic.SubsonicResponse
+	var err error
+	if playlistId == "" {
+		q.logger.Printf("Saving %d items to playlist %s", len(q.queueData.playerQueue), playlistName)
+		response, err = q.ui.connection.CreatePlaylist("", playlistName, songIds)
+	} else {
+		q.logger.Printf("Replacing playlist %s with %d", playlistId, len(q.queueData.playerQueue))
+		response, err = q.ui.connection.CreatePlaylist(playlistId, "", songIds)
+	}
+	if err != nil {
+		message := fmt.Sprintf("Error saving queue: %s", err)
+		q.ui.showMessageBox(message)
+		q.logger.Print(message)
+	} else {
+		if playlistId != "" {
+			for i, pl := range q.ui.playlists {
+				if string(pl.Id) == playlistId {
+					q.ui.playlists[i] = response.Playlist
+					break
+				}
+			}
+		} else {
+			q.ui.playlistPage.addPlaylist(response.Playlist)
+			q.ui.playlists = append(q.ui.playlists, response.Playlist)
+		}
+		q.ui.playlistPage.handlePlaylistSelected(response.Playlist)
+	}
+}
+
+// shuffle randomly shuffles entries in the queue, updates it, and moves
+// the selected-item to the new first entry.
 func (q *QueuePage) shuffle() {
 	if len(q.queueData.playerQueue) == 0 {
 		return

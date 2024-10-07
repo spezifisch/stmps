@@ -5,6 +5,7 @@ package subsonic
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -450,9 +451,28 @@ func (connection *SubsonicConnection) GetPlaylist(id string) (*SubsonicResponse,
 	return connection.getResponse("GetPlaylist", requestUrl)
 }
 
-func (connection *SubsonicConnection) CreatePlaylist(name string) (*SubsonicResponse, error) {
+// CreatePlaylist creates or updates a playlist on the server.
+// If id is provided, the existing playlist with that ID is updated with the new song list.
+// If name is provided, a new playlist is created with the song list.
+// Either id or name _must_ be populated, or the function returns an error.
+// If _both_ id and name are poplated, the function returns an error.
+// songIds may be nil, in which case the new playlist is created empty, or all
+// songs are removed from the existing playlist.
+func (connection *SubsonicConnection) CreatePlaylist(id, name string, songIds []string) (*SubsonicResponse, error) {
+	if (id == "" && name == "") || (id != "" && name != "") {
+		return nil, errors.New("CreatePlaylist: exactly one of id or name must be provided")
+	}
 	query := defaultQuery(connection)
-	query.Set("name", name)
+	if id != "" {
+		query.Set("id", id)
+	} else {
+		query.Set("name", name)
+	}
+	if songIds != nil {
+		for _, sid := range songIds {
+			query.Add("songId", sid)
+		}
+	}
 	requestUrl := connection.Host + "/rest/createPlaylist" + "?" + query.Encode()
 	return connection.getResponse("GetPlaylist", requestUrl)
 }

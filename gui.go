@@ -42,10 +42,12 @@ type Ui struct {
 	logPage *LogPage
 
 	// modals
-	addToPlaylistList *tview.List
-	messageBox        *tview.Modal
-	helpModal         tview.Primitive
-	helpWidget        *HelpWidget
+	addToPlaylistList    *tview.List
+	messageBox           *tview.Modal
+	helpModal            tview.Primitive
+	helpWidget           *HelpWidget
+	selectPlaylistModal  tview.Primitive
+	selectPlaylistWidget *PlaylistSelectionWidget
 
 	starIdList map[string]struct{}
 
@@ -72,6 +74,7 @@ const (
 	PageAddToPlaylist  = "addToPlaylist"
 	PageMessageBox     = "messageBox"
 	PageHelpBox        = "helpBox"
+	PageSelectPlaylist = "selectPlaylist"
 )
 
 func InitGui(indexes *[]subsonic.SubsonicIndex,
@@ -112,6 +115,7 @@ func InitGui(indexes *[]subsonic.SubsonicIndex,
 
 	ui.menuWidget = ui.createMenuWidget()
 	ui.helpWidget = ui.createHelpWidget()
+	ui.selectPlaylistWidget = ui.createPlaylistSelectionWidget()
 
 	// same as 'playlistList' except for the addToPlaylistModal
 	// - we need a specific version of this because we need different keybinds
@@ -125,6 +129,8 @@ func InitGui(indexes *[]subsonic.SubsonicIndex,
 		ui.pages.HidePage(PageMessageBox)
 		return event
 	})
+
+	ui.selectPlaylistModal = makeModal(ui.selectPlaylistWidget.Root, 80, 5)
 
 	// help box modal
 	ui.helpModal = makeModal(ui.helpWidget.Root, 80, 30)
@@ -166,6 +172,7 @@ func InitGui(indexes *[]subsonic.SubsonicIndex,
 		AddPage(PageDeletePlaylist, ui.playlistPage.DeletePlaylistModal, true, false).
 		AddPage(PageNewPlaylist, ui.playlistPage.NewPlaylistModal, true, false).
 		AddPage(PageAddToPlaylist, ui.browserPage.AddToPlaylistModal, true, false).
+		AddPage(PageSelectPlaylist, ui.selectPlaylistModal, true, false).
 		AddPage(PageMessageBox, ui.messageBox, true, false).
 		AddPage(PageHelpBox, ui.helpModal, true, false).
 		AddPage(PageLog, ui.logPage.Root, true, false)
@@ -215,6 +222,18 @@ func (ui *Ui) ShowHelp() {
 func (ui *Ui) CloseHelp() {
 	ui.helpWidget.visible = false
 	ui.pages.HidePage(PageHelpBox)
+}
+
+func (ui *Ui) ShowSelectPlaylist() {
+	ui.pages.ShowPage(PageSelectPlaylist)
+	ui.pages.SendToFront(PageSelectPlaylist)
+	ui.app.SetFocus(ui.selectPlaylistModal)
+	ui.selectPlaylistWidget.visible = true
+}
+
+func (ui *Ui) CloseSelectPlaylist() {
+	ui.pages.HidePage(PageSelectPlaylist)
+	ui.selectPlaylistWidget.visible = false
 }
 
 func (ui *Ui) showMessageBox(text string) {

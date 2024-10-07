@@ -256,14 +256,18 @@ func (p *PlaylistPage) UpdatePlaylists() {
 			p.ui.addToPlaylistList.Clear()
 
 			for _, playlist := range p.ui.playlists {
-				p.playlistList.AddItem(tview.Escape(playlist.Name), "", 0, nil)
-				p.ui.addToPlaylistList.AddItem(tview.Escape(playlist.Name), "", 0, nil)
+				p.addPlaylist(playlist)
 			}
 
 			p.isUpdating = false
 		})
 		stop <- true
 	}()
+}
+
+func (p *PlaylistPage) addPlaylist(playlist subsonic.SubsonicPlaylist) {
+	p.playlistList.AddItem(tview.Escape(playlist.Name), "", 0, nil)
+	p.ui.addToPlaylistList.AddItem(tview.Escape(playlist.Name), "", 0, nil)
 }
 
 func (p *PlaylistPage) handleAddPlaylistSongToQueue() {
@@ -321,7 +325,7 @@ func (p *PlaylistPage) handlePlaylistSelected(playlist subsonic.SubsonicPlaylist
 }
 
 func (p *PlaylistPage) newPlaylist(name string) {
-	response, err := p.ui.connection.CreatePlaylist(name)
+	response, err := p.ui.connection.CreatePlaylist("", name, nil)
 	if err != nil {
 		p.logger.Printf("newPlaylist: CreatePlaylist %s -- %s", name, err.Error())
 		return

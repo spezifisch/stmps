@@ -27,11 +27,19 @@ These screenshots use [Navidrome's demo server](https://demo.navidrome.org/) ([c
 
 ### Queue
 
-![Queue View](./docs/screenshots/queue.png)
+![Queue View](./docs/screenshots/queue_scaled.png)
 
 ### Browser
 
-![Browser View](./docs/screenshots/browser.png)
+![Browser View](./docs/screenshots/browser_scaled.png)
+
+### Playlists
+
+![Playlists View](./docs/screenshots/playlists_scaled.png)
+
+### Search
+
+![Search View](./docs/screenshots/search_scaled.png)
 
 ## Dependencies
 
@@ -116,8 +124,12 @@ These controls are accessible from any view:
 - `y`: Toggle star on song
 - `k`: Move song up in queue
 - `j`: Move song down in queue
+- `s`: Save the queue as a playlist
+- `S`: Shuffle the songs in the queue
 
 If the currently playing song is moved, the music is stopped before the move, and must be re-started manually.
+
+The save function includes an autocomplete function; if an existing playlist is selected (or manually entered), the `Overwrite` checkbox **must** be checked, or else the queue will not be saved. If a playlist is saved over, it will be **replaced** with the queue contents.
 
 ### Playlist Controls
 
