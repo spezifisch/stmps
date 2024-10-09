@@ -258,6 +258,8 @@ func (b *BrowserPage) handleAddArtistToQueue() {
 		return
 	}
 
+	sort.Sort(b.currentDirectory.Entities)
+
 	for _, entity := range b.currentDirectory.Entities {
 		if entity.IsDirectory {
 			b.addDirectoryToQueue(&entity)
