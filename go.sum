@@ -53,6 +53,16 @@ github.com/sourcegraph/conc v0.3.0 h1:OQTbbt6P72L20UqAkXXuLOj79LfEanQ+YQFNpLA9yS
 github.com/sourcegraph/conc v0.3.0/go.mod h1:Sdozi7LEKbFPqYX2/J+iBAM6HpqSLTASQIKqDmF7Mt0=
 github.com/spezifisch/tview-command v0.0.0-20241013143719-94366d6323e2 h1:rhNWDM0v9HbwuF5I8wvOW3bsCdiZ1KRnp7uvhp3Jw+Y=
 github.com/spezifisch/tview-command v0.0.0-20241013143719-94366d6323e2/go.mod h1:BmHPVRuS00KaY6eP3VAoPJVlfN0Fulajx3Dw9CwKfFw=
+github.com/spezifisch/tview-command v0.0.0-20241013164823-5fc036e6cbb9 h1:pnSN+If3/EaRVpd75ukcpGOrnHkxvszI0wV6wIXQsnc=
+github.com/spezifisch/tview-command v0.0.0-20241013164823-5fc036e6cbb9/go.mod h1:BmHPVRuS00KaY6eP3VAoPJVlfN0Fulajx3Dw9CwKfFw=
+github.com/spezifisch/tview-command v0.0.0-20241013170116-60d3122b9f50 h1:OUdI2lBFJqZ4lBYfFrMh8mg2JqEwEOJaLfpaxPFsmRg=
+github.com/spezifisch/tview-command v0.0.0-20241013170116-60d3122b9f50/go.mod h1:BmHPVRuS00KaY6eP3VAoPJVlfN0Fulajx3Dw9CwKfFw=
+github.com/spezifisch/tview-command v0.0.0-20241013173643-6f725a86244f h1:eg0T1W7EDG8UG3R4qy23QRDuFL8/PrISE0xh0Z9zFeo=
+github.com/spezifisch/tview-command v0.0.0-20241013173643-6f725a86244f/go.mod h1:BmHPVRuS00KaY6eP3VAoPJVlfN0Fulajx3Dw9CwKfFw=
+github.com/spezifisch/tview-command v0.0.0-20241013173854-23b02704223f h1:6KzEn8whFBcnVLuZU7sftvS4o8hkdh8520TU5ymD8Ls=
+github.com/spezifisch/tview-command v0.0.0-20241013173854-23b02704223f/go.mod h1:BmHPVRuS00KaY6eP3VAoPJVlfN0Fulajx3Dw9CwKfFw=
+github.com/spezifisch/tview-command v0.0.0-20241013193408-213554cd0289 h1:tYxRaxvhmXvJpOqxAt3AImUEqHtMFUfrztOSbTqn7ZI=
+github.com/spezifisch/tview-command v0.0.0-20241013193408-213554cd0289/go.mod h1:BmHPVRuS00KaY6eP3VAoPJVlfN0Fulajx3Dw9CwKfFw=
 github.com/spf13/afero v1.11.0 h1:WJQKhtpdm3v2IzqG8VMqrr6Rf3UYpEF239Jy9wNepM8=
 github.com/spf13/afero v1.11.0/go.mod h1:GH9Y3pIexgf1MTIWtNGyogA5MwRIDXGUr+hbWNoBjkY=
 github.com/spf13/cast v1.7.0 h1:ntdiHjuueXFgm5nzDRdOS4yfT43P5Fnud6DH50rz/7w=

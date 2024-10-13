@@ -78,7 +78,7 @@ func parseConfig() {
 }
 
 // initCommandHandler sets up tview-command as main input handler
-func initCommandHandler(logger *logger.Logger) {
+func initCommandHandler(logger *logger.Logger) *tviewcommand.Config {
 	tviewcommand.SetLogHandler(func(msg string) {
 		logger.Print(msg)
 	})
@@ -89,10 +89,13 @@ func initCommandHandler(logger *logger.Logger) {
 	config, err := tviewcommand.LoadConfig(configPath)
 	if err != nil || config == nil {
 		logger.PrintError("Failed to load command-shortcut config", err)
+		return nil
 	}
 
-	//env := keybinding.SetupEnvironment()
+	// Register commands
 	//keybinding.RegisterCommands(env)
+
+	return config
 }
 
 // return codes:
@@ -144,7 +147,15 @@ func main() {
 	}
 
 	logger := logger.Init()
-	initCommandHandler(logger)
+
+	// init tview-command
+	tvcomConfig := initCommandHandler(logger)
+	if tvcomConfig == nil {
+		osExit(1)
+	}
+
+	// init the context stack
+	tvcomContextStack := tviewcommand.NewContextStack()
 
 	// init mpv engine
 	player, err := mpvplayer.NewPlayer(logger)

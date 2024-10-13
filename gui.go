@@ -12,12 +12,17 @@ import (
 	"github.com/spezifisch/stmps/mpvplayer"
 	"github.com/spezifisch/stmps/remote"
 	"github.com/spezifisch/stmps/subsonic"
+	tviewcommand "github.com/spezifisch/tview-command"
 )
 
 // struct contains all the updatable elements of the Ui
 type Ui struct {
 	app   *tview.Application
 	pages *tview.Pages
+
+	// keybindings, managed by tview-command
+	keyConfig       *tviewcommand.Config
+	keyContextStack *tviewcommand.ContextStack
 
 	// top bar
 	startStopStatus *tview.TextView
@@ -77,12 +82,18 @@ const (
 	PageSelectPlaylist = "selectPlaylist"
 )
 
-func InitGui(indexes *[]subsonic.SubsonicIndex,
+func InitGui(
+	tvcomConfig *tviewcommand.Config,
+	tvcomContextStack *tviewcommand.ContextStack,
+	indexes *[]subsonic.SubsonicIndex,
 	connection *subsonic.SubsonicConnection,
 	player *mpvplayer.Player,
 	logger *logger.Logger,
 	mprisPlayer *remote.MprisPlayer) (ui *Ui) {
 	ui = &Ui{
+		keyConfig:       tvcomConfig,
+		keyContextStack: tvcomContextStack,
+
 		starIdList: map[string]struct{}{},
 
 		eventLoop: nil, // initialized by initEventLoops()
@@ -94,6 +105,9 @@ func InitGui(indexes *[]subsonic.SubsonicIndex,
 		logger:      logger,
 		mprisPlayer: mprisPlayer,
 	}
+
+	ui.keyContextStack.Push("Init")
+	logger.Print("Context: QueuePage pushed to the stack")
 
 	ui.initEventLoops()
 
