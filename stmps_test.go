@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"runtime"
 	"testing"
 
 	"github.com/spezifisch/stmps/logger"
@@ -22,21 +23,30 @@ func TestMainWithoutTUI(t *testing.T) {
 	exitCalled := false
 	osExit = func(code int) {
 		exitCalled = true
+
 		if code != 0 {
-			t.Fatalf("Unexpected exit with code: %d", code)
+			// Capture and print the stack trace
+			stackBuf := make([]byte, 1024)
+			stackSize := runtime.Stack(stackBuf, false)
+			stackTrace := string(stackBuf[:stackSize])
+
+			// Print the stack trace with new lines only
+			t.Fatalf("Unexpected exit with code: %d\nStack trace:\n%s\n", code, stackTrace)
 		}
 		// Since we don't abort execution here, we will run main() until the end or a panic.
 	}
 	headlessMode = true
+	testMode = true
 
-	// Restore osExit after the test
+	// Restore patches after the test
 	defer func() {
 		osExit = os.Exit
 		headlessMode = false
+		testMode = false
 	}()
 
 	// Set command-line arguments to trigger the help flag
-	os.Args = []string{"cmd", "--help"}
+	os.Args = []string{"cmd", "--config=stmp-example.toml", "--help"}
 
 	main()
 

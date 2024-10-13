@@ -22,26 +22,36 @@ import (
 
 var osExit = os.Exit  // A variable to allow mocking os.Exit in tests
 var headlessMode bool // This can be set to true during tests
+var testMode bool     // This can be set to true during tests, too
 
-func readConfig() {
+func readConfig(configFile *string) error {
 	required_properties := []string{"auth.username", "auth.password", "server.host"}
 
-	viper.SetConfigName("stmp")
-	viper.SetConfigType("toml")
-	viper.AddConfigPath("$HOME/.config/stmp")
-	viper.AddConfigPath(".")
-	err := viper.ReadInConfig()
-
-	if err != nil {
-		fmt.Printf("Config file error: %s \n", err)
-		osExit(1)
+	if configFile != nil {
+		// use custom config file
+		viper.SetConfigFile(*configFile)
+	} else {
+		// lookup default dirs
+		viper.SetConfigName("stmp") // TODO this should be stmps
+		viper.SetConfigType("toml")
+		viper.AddConfigPath("$HOME/.config/stmp") // TODO this should be stmps
+		viper.AddConfigPath(".")
 	}
 
+	// read it
+	err := viper.ReadInConfig()
+	if err != nil {
+		return fmt.Errorf("Config file error: %s\n", err)
+	}
+
+	// validate
 	for _, prop := range required_properties {
 		if !viper.IsSet(prop) {
-			fmt.Printf("Config property %s is required\n", prop)
+			return fmt.Errorf("Config property %s is required\n", prop)
 		}
 	}
+
+	return nil
 }
 
 // parseConfig takes the first non-flag arguments from flags and parses it
@@ -85,11 +95,13 @@ func initCommandHandler(logger *logger.Logger) {
 }
 
 func main() {
+	// parse flags and config
 	help := flag.Bool("help", false, "Print usage")
 	enableMpris := flag.Bool("mpris", false, "Enable MPRIS2")
 	list := flag.Bool("list", false, "list server data")
 	cpuprofile := flag.String("cpuprofile", "", "write cpu profile to `file`")
 	memprofile := flag.String("memprofile", "", "write memory profile to `file`")
+	configFile := flag.String("config", "c", "use config `file`")
 
 	flag.Parse()
 	if *help {
@@ -111,14 +123,57 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
+	// config gathering
 	if len(flag.Args()) > 0 {
 		parseConfig()
-	} else {
-		readConfig()
+	}
+
+	if err := readConfig(configFile); err != nil {
+		if configFile == nil {
+			fmt.Fprintf(os.Stderr, "Failed to read configuration: configuration file is nil\n")
+		} else {
+			fmt.Fprintf(os.Stderr, "Failed to read configuration from file '%s': %v\n", *configFile, err)
+		}
+		osExit(1)
 	}
 
 	logger := logger.Init()
 	initCommandHandler(logger)
+
+	// init mpv engine
+	player, err := mpvplayer.NewPlayer(logger)
+	if err != nil {
+		fmt.Println("Unable to initialize mpv. Is mpv installed?")
+		osExit(1)
+	}
+
+	var mprisPlayer *remote.MprisPlayer
+	// init mpris2 player control (linux only but fails gracefully on other systems)
+	if *enableMpris {
+		mprisPlayer, err = remote.RegisterMprisPlayer(player, logger)
+		if err != nil {
+			fmt.Printf("Unable to register MPRIS with DBUS: %s\n", err)
+			fmt.Println("Try running without MPRIS")
+			osExit(1)
+		}
+		defer mprisPlayer.Close()
+	}
+
+	// init macos mediaplayer control
+	if runtime.GOOS == "darwin" {
+		if err = remote.RegisterMPMediaHandler(player, logger); err != nil {
+			fmt.Printf("Unable to initialize MediaPlayer bindings: %s\n", err)
+			osExit(1)
+		} else {
+			logger.Print("MacOS MediaPlayer registered")
+		}
+	}
+
+	if testMode {
+		fmt.Println("Running in test mode for testing.")
+		osExit(0)
+		return
+	}
 
 	connection := subsonic.Init(logger)
 	connection.SetClientInfo(clientName, clientVersion)
@@ -171,37 +226,9 @@ func main() {
 		osExit(0)
 	}
 
-	// init mpv engine
-	player, err := mpvplayer.NewPlayer(logger)
-	if err != nil {
-		fmt.Println("Unable to initialize mpv. Is mpv installed?")
-		osExit(1)
-	}
-
-	var mprisPlayer *remote.MprisPlayer
-	// init mpris2 player control (linux only but fails gracefully on other systems)
-	if *enableMpris {
-		mprisPlayer, err = remote.RegisterMprisPlayer(player, logger)
-		if err != nil {
-			fmt.Printf("Unable to register MPRIS with DBUS: %s\n", err)
-			fmt.Println("Try running without MPRIS")
-			osExit(1)
-		}
-		defer mprisPlayer.Close()
-	}
-
-	// init macos mediaplayer control
-	if runtime.GOOS == "darwin" {
-		if err = remote.RegisterMPMediaHandler(player, logger); err != nil {
-			fmt.Printf("Unable to initialize MediaPlayer bindings: %s\n", err)
-			osExit(1)
-		} else {
-			logger.Print("MacOS MediaPlayer registered")
-		}
-	}
-
 	if headlessMode {
 		fmt.Println("Running in headless mode for testing.")
+		osExit(0)
 		return
 	}
 
