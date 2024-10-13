@@ -234,7 +234,7 @@ func main() {
 
 	if headlessMode {
 		fmt.Println("Running in headless mode for testing.")
-		osExit(0)
+		osExit(0x23420002)
 		return
 	}
 
