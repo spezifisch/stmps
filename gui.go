@@ -107,7 +107,7 @@ func InitGui(
 	}
 
 	ui.keyContextStack.Push("Init")
-	logger.Print("Context: QueuePage pushed to the stack")
+	logger.Print("Context: Init pushed to the stack")
 
 	ui.initEventLoops()
 
@@ -213,6 +213,9 @@ func (ui *Ui) Run() error {
 	// receive events from mpv wrapper
 	ui.player.RegisterEventConsumer(ui)
 
+	// leave init key context
+	ui.keyContextStack.PopExpect("Init")
+
 	// run gui/background event handler
 	ui.runEventLoops()
 
@@ -224,6 +227,7 @@ func (ui *Ui) Run() error {
 }
 
 func (ui *Ui) ShowHelp() {
+	ui.keyContextStack.Push("Help")
 	activePage := ui.menuWidget.GetActivePage()
 	ui.helpWidget.RenderHelp(activePage)
 
@@ -234,11 +238,13 @@ func (ui *Ui) ShowHelp() {
 }
 
 func (ui *Ui) CloseHelp() {
+	ui.keyContextStack.PopExpect("Help")
 	ui.helpWidget.visible = false
 	ui.pages.HidePage(PageHelpBox)
 }
 
 func (ui *Ui) ShowSelectPlaylist() {
+	ui.keyContextStack.Push("SelectPlaylist")
 	ui.pages.ShowPage(PageSelectPlaylist)
 	ui.pages.SendToFront(PageSelectPlaylist)
 	ui.app.SetFocus(ui.selectPlaylistModal)
@@ -246,6 +252,7 @@ func (ui *Ui) ShowSelectPlaylist() {
 }
 
 func (ui *Ui) CloseSelectPlaylist() {
+	ui.keyContextStack.PopExpect("SelectPlaylist")
 	ui.pages.HidePage(PageSelectPlaylist)
 	ui.selectPlaylistWidget.visible = false
 }

@@ -12,7 +12,7 @@ require (
 )
 
 require (
-	github.com/spezifisch/tview-command v0.0.0-20241013193408-213554cd0289
+	github.com/spezifisch/tview-command v0.0.0-20241013195600-86c4ba9c4c88
 	github.com/stretchr/testify v1.9.0
 	github.com/supersonic-app/go-mpv v0.1.0
 )
