@@ -1,10 +1,20 @@
+# This tvcom test config has different levels of inheritance to try out.
+
 [Global.settings]
 silent = true
 
 [Global.bindings]
+CTRL-Z = "tvcomToggleDebugWidget"
 
 [Default.bindings]
-d = "deleteSelectedTrack"
+CTRL-L = "log '^L pressed!'"
 
-[Empty.bindings]
-# context with no bindings
+[Init]
+# clear inherited Default bindings
+context_override = ["Empty"]
+# Init: add key bindings only valid *during* program startup
+[Init.bindings]
+q = "force-quit"
+
+[QueuePage.bindings]
+# inherits Default
