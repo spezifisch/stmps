@@ -238,6 +238,11 @@ func main() {
 		return
 	}
 
+	if headlessMode {
+		fmt.Println("Running in headless mode for testing.")
+		return
+	}
+
 	ui := InitGui(&indexResponse.Indexes.Index,
 		connection,
 		player,
