@@ -24,7 +24,7 @@ func TestMainWithoutTUI(t *testing.T) {
 	osExit = func(code int) {
 		exitCalled = true
 
-		if code != 0 {
+		if code != 0x23420001 {
 			// Capture and print the stack trace
 			stackBuf := make([]byte, 1024)
 			stackSize := runtime.Stack(stackBuf, false)
@@ -46,7 +46,7 @@ func TestMainWithoutTUI(t *testing.T) {
 	}()
 
 	// Set command-line arguments to trigger the help flag
-	os.Args = []string{"cmd", "--config=stmp-example.toml", "--help"}
+	os.Args = []string{"cmd", "--config=stmp-example.toml"}
 
 	main()
 
