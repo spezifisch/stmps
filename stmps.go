@@ -16,7 +16,7 @@ import (
 	"github.com/spezifisch/stmps/mpvplayer"
 	"github.com/spezifisch/stmps/remote"
 	"github.com/spezifisch/stmps/subsonic"
-	"github.com/spezifisch/tview-command/keybinding"
+	tviewcommand "github.com/spezifisch/tview-command"
 	"github.com/spf13/viper"
 )
 
@@ -66,14 +66,14 @@ func parseConfig() {
 
 // initCommandHandler sets up tview-command as main input handler
 func initCommandHandler(logger *logger.Logger) {
-	keybinding.SetLogHandler(func(msg string) {
+	tviewcommand.SetLogHandler(func(msg string) {
 		logger.Print(msg)
 	})
 
 	configPath := "HACK.commands.toml"
 
 	// Load the configuration file
-	config, err := keybinding.LoadConfig(configPath)
+	config, err := tviewcommand.LoadConfig(configPath)
 	if err != nil || config == nil {
 		logger.PrintError("Failed to load command-shortcut config", err)
 	}

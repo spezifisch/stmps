@@ -12,7 +12,7 @@ require (
 )
 
 require (
-	github.com/spezifisch/tview-command v0.0.0-20241013011314-5b01dcbdc948
+	github.com/spezifisch/tview-command v0.0.0-20241013135507-37aefd938546
 	github.com/supersonic-app/go-mpv v0.1.0
 )
 
