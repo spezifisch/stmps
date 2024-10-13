@@ -240,6 +240,7 @@ func main() {
 
 	if headlessMode {
 		fmt.Println("Running in headless mode for testing.")
+		osExit(0)
 		return
 	}
 
