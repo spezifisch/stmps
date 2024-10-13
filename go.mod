@@ -12,12 +12,14 @@ require (
 )
 
 require (
-	github.com/spezifisch/tview-command v0.0.0-20241013135507-37aefd938546
+	github.com/spezifisch/tview-command v0.0.0-20241013143719-94366d6323e2
+	github.com/stretchr/testify v1.9.0
 	github.com/supersonic-app/go-mpv v0.1.0
 )
 
 require (
 	github.com/BurntSushi/toml v1.4.0 // indirect
+	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/gdamore/encoding v1.0.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
@@ -26,6 +28,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sagikazarmark/locafero v0.6.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect

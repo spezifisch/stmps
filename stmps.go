@@ -20,6 +20,9 @@ import (
 	"github.com/spf13/viper"
 )
 
+var osExit = os.Exit  // A variable to allow mocking os.Exit in tests
+var headlessMode bool // This can be set to true during tests
+
 func readConfig() {
 	required_properties := []string{"auth.username", "auth.password", "server.host"}
 
@@ -31,7 +34,7 @@ func readConfig() {
 
 	if err != nil {
 		fmt.Printf("Config file error: %s \n", err)
-		os.Exit(1)
+		osExit(1)
 	}
 
 	for _, prop := range required_properties {
@@ -57,10 +60,9 @@ func parseConfig() {
 		u.User = nil
 		viper.Set("server.host", u.String())
 	} else {
-		fmt.Printf("Invalid server format; must be a valid URL: http[s]://[user:pass@]server:port")
-		fmt.Printf("USAGE: %s <args> [http[s]://[user:pass@]server:port]\n", os.Args[0])
-		flag.Usage()
-		os.Exit(1)
+		fmt.Printf("Invalid server format; must be a valid URL!")
+		fmt.Printf("Usage: %s <args> [http[s]://[user:pass@]server:port]\n", os.Args[0])
+		osExit(1)
 	}
 }
 
@@ -93,7 +95,7 @@ func main() {
 	if *help {
 		fmt.Printf("USAGE: %s <args> [[user:pass@]server:port]\n", os.Args[0])
 		flag.Usage()
-		os.Exit(0)
+		osExit(0)
 	}
 
 	// cpu/memprofile code straight from https://pkg.go.dev/runtime/pprof
@@ -130,7 +132,7 @@ func main() {
 	indexResponse, err := connection.GetIndexes()
 	if err != nil {
 		fmt.Printf("Error fetching playlists from server: %s\n", err)
-		os.Exit(1)
+		osExit(1)
 	}
 
 	if *list {
@@ -151,7 +153,7 @@ func main() {
 		playlistResponse, err := connection.GetPlaylists()
 		if err != nil {
 			fmt.Printf("Error fetching indexes from server: %s\n", err)
-			os.Exit(1)
+			osExit(1)
 		}
 		fmt.Printf("  Directory: %s\n", playlistResponse.Directory.Name)
 		fmt.Printf("  Status: %s\n", playlistResponse.Status)
@@ -166,14 +168,14 @@ func main() {
 			fmt.Printf("    %s\n", pl.Name)
 		}
 
-		os.Exit(0)
+		osExit(0)
 	}
 
 	// init mpv engine
 	player, err := mpvplayer.NewPlayer(logger)
 	if err != nil {
 		fmt.Println("Unable to initialize mpv. Is mpv installed?")
-		os.Exit(1)
+		osExit(1)
 	}
 
 	var mprisPlayer *remote.MprisPlayer
@@ -183,7 +185,7 @@ func main() {
 		if err != nil {
 			fmt.Printf("Unable to register MPRIS with DBUS: %s\n", err)
 			fmt.Println("Try running without MPRIS")
-			os.Exit(1)
+			osExit(1)
 		}
 		defer mprisPlayer.Close()
 	}
@@ -192,10 +194,15 @@ func main() {
 	if runtime.GOOS == "darwin" {
 		if err = remote.RegisterMPMediaHandler(player, logger); err != nil {
 			fmt.Printf("Unable to initialize MediaPlayer bindings: %s\n", err)
-			os.Exit(1)
+			osExit(1)
 		} else {
 			logger.Print("MacOS MediaPlayer registered")
 		}
+	}
+
+	if headlessMode {
+		fmt.Println("Running in headless mode for testing.")
+		return
 	}
 
 	ui := InitGui(&indexResponse.Indexes.Index,
