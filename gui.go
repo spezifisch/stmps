@@ -204,7 +204,10 @@ func InitGui(
 		SetFocus(rootFlex).
 		EnableMouse(true)
 
-	ui.playlistPage.UpdatePlaylists()
+	if !testMode {
+		// this connects to the subsonic server, so exclude it for tests
+		ui.playlistPage.UpdatePlaylists()
+	}
 
 	return ui
 }

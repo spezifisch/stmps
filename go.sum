@@ -65,6 +65,8 @@ github.com/spezifisch/tview-command v0.0.0-20241013193408-213554cd0289 h1:tYxRax
 github.com/spezifisch/tview-command v0.0.0-20241013193408-213554cd0289/go.mod h1:BmHPVRuS00KaY6eP3VAoPJVlfN0Fulajx3Dw9CwKfFw=
 github.com/spezifisch/tview-command v0.0.0-20241013195600-86c4ba9c4c88 h1:Ck4VeJ+nT0iSc708iwqjTwhaTNTTFxmNilEXVmze6n8=
 github.com/spezifisch/tview-command v0.0.0-20241013195600-86c4ba9c4c88/go.mod h1:BmHPVRuS00KaY6eP3VAoPJVlfN0Fulajx3Dw9CwKfFw=
+github.com/spezifisch/tview-command v0.0.0-20241014224340-cf19ddd0dd54 h1:d0haUdxW02V9MTO+8njIOSlEKjA+/JeXrqPLyx5J2sQ=
+github.com/spezifisch/tview-command v0.0.0-20241014224340-cf19ddd0dd54/go.mod h1:ctJ/3e6RYpK+O9M1kFxkUFInR13DOeQmik5wZiJ5WNk=
 github.com/spf13/afero v1.11.0 h1:WJQKhtpdm3v2IzqG8VMqrr6Rf3UYpEF239Jy9wNepM8=
 github.com/spf13/afero v1.11.0/go.mod h1:GH9Y3pIexgf1MTIWtNGyogA5MwRIDXGUr+hbWNoBjkY=
 github.com/spf13/cast v1.7.0 h1:ntdiHjuueXFgm5nzDRdOS4yfT43P5Fnud6DH50rz/7w=

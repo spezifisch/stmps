@@ -4,9 +4,12 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/spezifisch/stmps/mpvplayer"
 	"github.com/spezifisch/stmps/subsonic"
+	tviewcommand "github.com/spezifisch/tview-command"
 )
 
 func (ui *Ui) handlePageInput(event *tcell.EventKey) *tcell.EventKey {
@@ -16,6 +19,26 @@ func (ui *Ui) handlePageInput(event *tcell.EventKey) *tcell.EventKey {
 		return event
 	}
 
+	// Create a tview-command event
+	tcEvent := tviewcommand.FromEventKey(event, ui.keyConfig)
+
+	// Look up the command based on the active context
+	activeContext := ui.keyContextStack.Current()
+	if err := tcEvent.LookupCommand(activeContext); err != nil {
+		ui.logger.Printf("[t-c] error: %v, context: %s", err, activeContext)
+		//return event // HACK
+	} else {
+		// Add some logs for now
+		right := ""
+		if tcEvent.IsBound {
+			right = fmt.Sprintf("bound to command: %s", tcEvent.Command)
+		} else {
+			right = "unbound"
+		}
+		ui.logger.Printf("[t-c] saw an event: key '%s' in context '%v' -> %s", tcEvent.KeyName, activeContext, right)
+	}
+
+	// Old stuff
 	switch event.Rune() {
 	case '1':
 		ui.ShowPage(PageBrowser)

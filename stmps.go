@@ -201,7 +201,7 @@ func main() {
 	connection.Scrobble = viper.GetBool("server.scrobble")
 	connection.RandomSongNumber = viper.GetUint("client.random-songs")
 
-	indexResponse, err := connection.GetIndexes()
+	indexResponse, err := connection.GetIndexes() // TODO how long does this take?
 	if err != nil {
 		fmt.Printf("Error fetching playlists from server: %s\n", err)
 		osExit(1)
