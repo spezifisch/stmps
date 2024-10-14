@@ -249,13 +249,10 @@ func main() {
 		return
 	}
 
-	if headlessMode {
-		fmt.Println("Running in headless mode for testing.")
-		osExit(0)
-		return
-	}
-
-	ui := InitGui(&indexResponse.Indexes.Index,
+	ui := InitGui(
+		tvcomConfig,
+		tvcomContextStack,
+		&indexResponse.Indexes.Index,
 		connection,
 		player,
 		logger,
