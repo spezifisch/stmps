@@ -151,7 +151,7 @@ func main() {
 	// init tview-command
 	tvcomConfig := initCommandHandler(logger)
 	if tvcomConfig == nil {
-		osExit(1)
+		osExit(3)
 	}
 
 	// init the context stack
