@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"flag"
+	"log"
 	"os"
 	"runtime"
 	"testing"
@@ -93,9 +95,27 @@ func TestMainWithConfigFileEmptyString(t *testing.T) {
 	// Set command-line arguments to trigger the help flag
 	os.Args = []string{"stmps"}
 
-	main()
+	// Capture output of the main function
+	output := captureOutput(func() {
+		main()
+	})
 
+	// Check for the expected conditions
 	if !exitCalled {
 		t.Fatalf("osExit was not called")
 	}
+
+	// Either no error or a specific error message should pass the test
+	expectedErrorPrefix := "Config file error: Config File \"stmp\" Not Found"
+	if output != "" && !assert.Contains(t, output, expectedErrorPrefix) {
+		t.Fatalf("Unexpected error output: %s", output)
+	}
+}
+
+func captureOutput(f func()) string {
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+	f()
+	log.SetOutput(os.Stderr)
+	return buf.String()
 }
