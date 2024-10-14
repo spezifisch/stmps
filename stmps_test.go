@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"os"
 	"runtime"
 	"testing"
@@ -19,6 +20,9 @@ func TestPlayerInitialization(t *testing.T) {
 }
 
 func TestMainWithoutTUI(t *testing.T) {
+	// Reset flags before each test, needed for flag usage in main()
+	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+
 	// Mock osExit to prevent actual exit during test
 	exitCalled := false
 	osExit = func(code int) {
@@ -57,6 +61,9 @@ func TestMainWithoutTUI(t *testing.T) {
 
 // Regression test for https://github.com/spezifisch/stmps/issues/70
 func TestMainWithConfigFileEmptyString(t *testing.T) {
+	// Reset flags before each test
+	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+
 	// Mock osExit to prevent actual exit during test
 	exitCalled := false
 	osExit = func(code int) {
