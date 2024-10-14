@@ -27,14 +27,15 @@ var testMode bool     // This can be set to true during tests, too
 func readConfig(configFile *string) error {
 	required_properties := []string{"auth.username", "auth.password", "server.host"}
 
-	if configFile != nil {
+	if configFile != nil && *configFile != "" {
 		// use custom config file
 		viper.SetConfigFile(*configFile)
 	} else {
 		// lookup default dirs
 		viper.SetConfigName("stmp") // TODO this should be stmps
 		viper.SetConfigType("toml")
-		viper.AddConfigPath("$HOME/.config/stmp") // TODO this should be stmps
+		viper.AddConfigPath("$HOME/.config/stmp") // TODO this should be stmps only
+		viper.AddConfigPath("$HOME/.config/stmps")
 		viper.AddConfigPath(".")
 	}
 
@@ -104,7 +105,7 @@ func main() {
 	list := flag.Bool("list", false, "list server data")
 	cpuprofile := flag.String("cpuprofile", "", "write cpu profile to `file`")
 	memprofile := flag.String("memprofile", "", "write memory profile to `file`")
-	configFile := flag.String("config", "c", "use config `file`")
+	configFile := flag.String("config", "", "use config `file`")
 
 	flag.Parse()
 	if *help {
