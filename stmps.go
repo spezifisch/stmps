@@ -98,6 +98,11 @@ func initCommandHandler(logger *logger.Logger) *tviewcommand.Config {
 	return config
 }
 
+// return codes:
+// 0 - OK
+// 1 - generic errors
+// 2 - main config errors
+// 2 - keybinding config errors
 func main() {
 	// parse flags and config
 	help := flag.Bool("help", false, "Print usage")
@@ -138,7 +143,7 @@ func main() {
 		} else {
 			fmt.Fprintf(os.Stderr, "Failed to read configuration from file '%s': %v\n", *configFile, err)
 		}
-		osExit(1)
+		osExit(2)
 	}
 
 	logger := logger.Init()
@@ -146,7 +151,7 @@ func main() {
 	// init tview-command
 	tvcomConfig := initCommandHandler(logger)
 	if tvcomConfig == nil {
-		osExit(1)
+		osExit(3)
 	}
 
 	// init the context stack

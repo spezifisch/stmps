@@ -71,7 +71,7 @@ func TestMainWithConfigFileEmptyString(t *testing.T) {
 	osExit = func(code int) {
 		exitCalled = true
 
-		if code != 0x23420001 {
+		if code != 0x23420001 && code != 2 {
 			// Capture and print the stack trace
 			stackBuf := make([]byte, 1024)
 			stackSize := runtime.Stack(stackBuf, false)
