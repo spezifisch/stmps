@@ -5,8 +5,8 @@ import (
 	"strings"
 )
 
-// CommandFunc defines the signature of a command function with arguments.
-type CommandFunc func(args []string) error
+// CommandFunc defines the signature of a callback function implementing a command.
+type CommandFunc func(ctx *CommandContext, args []string) error
 
 // CommandRegistry holds the list of available commands.
 type CommandRegistry struct {
@@ -26,7 +26,7 @@ func (r *CommandRegistry) Register(name string, fn CommandFunc) {
 }
 
 // Execute parses and runs a command chain, supporting arguments and chaining.
-func (r *CommandRegistry) Execute(commandStr string) error {
+func (r *CommandRegistry) Execute(ctx *CommandContext, commandStr string) error {
 	// Split the input into chains of commands
 	commandChains := parseCommandChain(commandStr)
 
@@ -43,7 +43,7 @@ func (r *CommandRegistry) Execute(commandStr string) error {
 
 		if cmd, exists := r.commands[commandName]; exists {
 			// Execute the command with arguments
-			err := cmd(args)
+			err := cmd(ctx, args)
 			if err != nil {
 				return fmt.Errorf("Error executing command '%s': %v", commandName, err)
 			}
@@ -56,11 +56,11 @@ func (r *CommandRegistry) Execute(commandStr string) error {
 }
 
 // ExecuteChain allows executing multiple commands separated by ';'
-func (r *CommandRegistry) ExecuteChain(commandChain string) error {
+func (r *CommandRegistry) ExecuteChain(ctx *CommandContext, commandChain string) error {
 	commands := strings.Split(commandChain, ";")
 	for _, cmd := range commands {
 		cmd = strings.TrimSpace(cmd)
-		if err := r.Execute(cmd); err != nil {
+		if err := r.Execute(ctx, cmd); err != nil {
 			return err
 		}
 	}
