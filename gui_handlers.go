@@ -12,6 +12,17 @@ import (
 	tviewcommand "github.com/spezifisch/tview-command"
 )
 
+// >>> Stuff that will be moved to t-c
+type MyEvent struct {
+	tviewcommand.Event
+}
+
+func (e *MyEvent) IsCommand(name string) bool {
+	return e.Command == name
+}
+
+//<<< End of Stuff
+
 func (ui *Ui) handlePageInput(event *tcell.EventKey) *tcell.EventKey {
 	// we don't want any of these firing if we're trying to add a new playlist
 	focused := ui.app.GetFocus()
@@ -36,6 +47,13 @@ func (ui *Ui) handlePageInput(event *tcell.EventKey) *tcell.EventKey {
 			right = "unbound"
 		}
 		ui.logger.Printf("[t-c] saw an event: key '%s' in context '%v' -> %s", tcEvent.KeyName, activeContext, right)
+	}
+
+	// Ensure "force-quit" command quits
+	myEvent := MyEvent{*tcEvent}
+	if myEvent.IsCommand("force-quit") {
+		ui.Quit()
+		return nil
 	}
 
 	// Old stuff
