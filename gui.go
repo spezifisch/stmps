@@ -203,6 +203,10 @@ func InitGui(
 		AddItem(ui.pages, 0, 1, true).
 		AddItem(ui.menuWidget.Root, 1, 0, false)
 
+	// add commands
+	logger.Print("tc: Adding Ui commands")
+	ui.registerCommands(ui.commandRegistry)
+
 	// add main input handler
 	logger.Print("tc: Adding input handler")
 	rootFlex.SetInputCapture(ui.handlePageInput)
