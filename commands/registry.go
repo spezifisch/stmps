@@ -25,6 +25,18 @@ func (r *CommandRegistry) Register(name string, fn CommandFunc) {
 	r.commands[name] = fn
 }
 
+// Get returns the command function and a boolean indicating if the command exists.
+func (r *CommandRegistry) Get(commandName string) (CommandFunc, bool) {
+	cmd, exists := r.commands[commandName]
+	return cmd, exists
+}
+
+// CommandExists is a small wrapper function to extract the "exists" boolean.
+func (r *CommandRegistry) CommandExists(commandName string) bool {
+	_, exists := r.Get(commandName)
+	return exists
+}
+
 // Execute parses and runs a command chain, supporting arguments and chaining.
 func (r *CommandRegistry) Execute(ctx *CommandContext, commandStr string) error {
 	// Split the input into chains of commands

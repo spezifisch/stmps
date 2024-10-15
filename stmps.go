@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"runtime/pprof"
 
+	"github.com/spezifisch/stmps/commands"
 	"github.com/spezifisch/stmps/logger"
 	"github.com/spezifisch/stmps/mpvplayer"
 	"github.com/spezifisch/stmps/remote"
@@ -154,8 +155,11 @@ func main() {
 		osExit(3)
 	}
 
-	// init the context stack
+	// init the context stack (context-sensitive keybindings)
 	tvcomContextStack := tviewcommand.NewContextStack()
+
+	// init command registry (command parser and executor)
+	commandRegistry := commands.NewRegistry()
 
 	// init mpv engine
 	player, err := mpvplayer.NewPlayer(logger)
@@ -252,6 +256,7 @@ func main() {
 	ui := InitGui(
 		tvcomConfig,
 		tvcomContextStack,
+		commandRegistry,
 		&indexResponse.Indexes.Index,
 		connection,
 		player,

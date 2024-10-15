@@ -8,6 +8,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	"github.com/spezifisch/stmps/commands"
 	"github.com/spezifisch/stmps/logger"
 	"github.com/spezifisch/stmps/mpvplayer"
 	"github.com/spezifisch/stmps/remote"
@@ -23,6 +24,9 @@ type Ui struct {
 	// keybindings, managed by tview-command
 	keyConfig       *tviewcommand.Config
 	keyContextStack *tviewcommand.ContextStack
+
+	// command registry, managed by stmps (for now)
+	commandRegistry *commands.CommandRegistry
 
 	// top bar
 	startStopStatus *tview.TextView
@@ -85,6 +89,7 @@ const (
 func InitGui(
 	tvcomConfig *tviewcommand.Config,
 	tvcomContextStack *tviewcommand.ContextStack,
+	commandRegistry *commands.CommandRegistry,
 	indexes *[]subsonic.SubsonicIndex,
 	connection *subsonic.SubsonicConnection,
 	player *mpvplayer.Player,
@@ -106,8 +111,9 @@ func InitGui(
 		mprisPlayer: mprisPlayer,
 	}
 
+	logger.Print("tc: Init")
 	ui.keyContextStack.Push("Init")
-	logger.Print("Context: Init pushed to the stack")
+	ui.commandRegistry = commandRegistry
 
 	ui.initEventLoops()
 
@@ -198,6 +204,7 @@ func InitGui(
 		AddItem(ui.menuWidget.Root, 1, 0, false)
 
 	// add main input handler
+	logger.Print("tc: Adding input handler")
 	rootFlex.SetInputCapture(ui.handlePageInput)
 
 	ui.app.SetRoot(rootFlex, true).

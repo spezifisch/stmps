@@ -4,9 +4,8 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/gdamore/tcell/v2"
+	"github.com/spezifisch/stmps/commands"
 	"github.com/spezifisch/stmps/mpvplayer"
 	"github.com/spezifisch/stmps/subsonic"
 	tviewcommand "github.com/spezifisch/tview-command"
@@ -21,135 +20,33 @@ func (e *MyEvent) IsCommand(name string) bool {
 	return e.Command == name
 }
 
-//<<< End of Stuff
-
+// <<< End of Stuff
 func (ui *Ui) handlePageInput(event *tcell.EventKey) *tcell.EventKey {
-	// we don't want any of these firing if we're trying to add a new playlist
 	focused := ui.app.GetFocus()
-	if ui.playlistPage.IsNewPlaylistInputFocused(focused) || ui.browserPage.IsSearchFocused(focused) || focused == ui.searchPage.searchField || ui.selectPlaylistWidget.visible {
+	if ui.playlistPage.IsNewPlaylistInputFocused(focused) ||
+		ui.browserPage.IsSearchFocused(focused) ||
+		focused == ui.searchPage.searchField ||
+		ui.selectPlaylistWidget.visible {
 		return event
 	}
 
-	// Create a tview-command event
 	tcEvent := tviewcommand.FromEventKey(event, ui.keyConfig)
-
-	// Look up the command based on the active context
 	activeContext := ui.keyContextStack.Current()
-	if err := tcEvent.LookupCommand(activeContext); err != nil {
-		ui.logger.Printf("[t-c] error: %v, context: %s", err, activeContext)
-		//return event // HACK
-	} else {
-		// Add some logs for now
-		right := ""
-		if tcEvent.IsBound {
-			right = fmt.Sprintf("bound to command: %s", tcEvent.Command)
-		} else {
-			right = "unbound"
-		}
-		ui.logger.Printf("[t-c] saw an event: key '%s' in context '%v' -> %s", tcEvent.KeyName, activeContext, right)
-	}
 
-	// Ensure "force-quit" command quits
-	myEvent := MyEvent{*tcEvent}
-	if myEvent.IsCommand("force-quit") {
-		ui.Quit()
+	if err := tcEvent.LookupCommand(activeContext); err == nil && tcEvent.IsBound {
+		ctx := &commands.CommandContext{
+			Logger:      ui.logger,
+			CurrentPage: activeContext,
+		}
+
+		err := ui.commandRegistry.Execute(ctx, tcEvent.Command)
+		if err != nil {
+			ui.logger.PrintError("t-c command execution", err)
+		}
 		return nil
 	}
 
-	// Old stuff
-	switch event.Rune() {
-	case '1':
-		ui.ShowPage(PageBrowser)
-
-	case '2':
-		ui.ShowPage(PageQueue)
-
-	case '3':
-		ui.ShowPage(PagePlaylists)
-
-	case '4':
-		ui.ShowPage(PageSearch)
-
-	case '5':
-		ui.ShowPage(PageLog)
-
-	case '?':
-		ui.ShowHelp()
-
-	case 'Q':
-		ui.Quit()
-
-	case 'r':
-		// add random songs to queue
-		ui.handleAddRandomSongs("", "random")
-
-	case 'D':
-		// clear queue and stop playing
-		ui.player.ClearQueue()
-		ui.queuePage.UpdateQueue()
-
-	case 'p':
-		// toggle playing/pause
-		err := ui.player.Pause()
-		if err != nil {
-			ui.logger.PrintError("handlePageInput: Pause", err)
-		}
-
-	case 'P':
-		// stop playing without changes to queue
-		ui.logger.Print("key stop")
-		err := ui.player.Stop()
-		if err != nil {
-			ui.logger.PrintError("handlePageInput: Stop", err)
-		}
-
-	case 'X':
-		// debug stuff
-		ui.logger.Print("test")
-		//ui.player.Test()
-		ui.showMessageBox("foo bar")
-
-	case '-':
-		// volume-
-		if err := ui.player.AdjustVolume(-5); err != nil {
-			ui.logger.PrintError("handlePageInput: AdjustVolume-", err)
-		}
-
-	case '+', '=':
-		// volume+
-		if err := ui.player.AdjustVolume(5); err != nil {
-			ui.logger.PrintError("handlePageInput: AdjustVolume+", err)
-		}
-
-	case '.':
-		// <<
-		if err := ui.player.Seek(10); err != nil {
-			ui.logger.PrintError("handlePageInput: Seek+", err)
-		}
-
-	case ',':
-		// >>
-		if err := ui.player.Seek(-10); err != nil {
-			ui.logger.PrintError("handlePageInput: Seek-", err)
-		}
-
-	case '>':
-		// skip to next track
-		if err := ui.player.PlayNextTrack(); err != nil {
-			ui.logger.PrintError("handlePageInput: Next", err)
-		}
-		ui.queuePage.UpdateQueue()
-
-	case 's':
-		if err := ui.connection.StartScan(); err != nil {
-			ui.logger.PrintError("startScan:", err)
-		}
-
-	default:
-		return event
-	}
-
-	return nil
+	return event // Pass event back if no command was handled
 }
 
 func (ui *Ui) ShowPage(name string) {
