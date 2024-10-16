@@ -7,6 +7,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/spezifisch/stmps/mpvplayer"
 	"github.com/spezifisch/stmps/subsonic"
+	"github.com/spf13/viper"
 )
 
 func (ui *Ui) handlePageInput(event *tcell.EventKey) *tcell.EventKey {
@@ -118,6 +119,9 @@ func (ui *Ui) ShowPage(name string) {
 
 func (ui *Ui) Quit() {
 	// TODO savePlayQueue/getPlayQueue
+	if !viper.GetBool("ui.hide-song-info") {
+		ui.queuePage.coverArtCache.Close()
+	}
 	ui.player.Quit()
 	ui.app.Stop()
 }
