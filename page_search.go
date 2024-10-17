@@ -89,17 +89,23 @@ func (ui *Ui) createSearchPage() *SearchPage {
 			ui.app.SetFocus(searchPage.albumList)
 			return nil
 		case tcell.KeyEnter:
-			idx := searchPage.artistList.GetCurrentItem()
-			searchPage.addArtistToQueue(searchPage.artists[idx])
-			return nil
+			if len(searchPage.artists) != 0 {
+				idx := searchPage.artistList.GetCurrentItem()
+				searchPage.addArtistToQueue(searchPage.artists[idx])
+				return nil
+			}
+			return event
 		}
 
 		switch event.Rune() {
 		case 'a':
-			idx := searchPage.artistList.GetCurrentItem()
-			searchPage.logger.Printf("artistList adding (%d) %s", idx, searchPage.artists[idx].Name)
-			searchPage.addArtistToQueue(searchPage.artists[idx])
-			return nil
+			if len(searchPage.artists) != 0 {
+				idx := searchPage.artistList.GetCurrentItem()
+				searchPage.logger.Printf("artistList adding (%d) %s", idx, searchPage.artists[idx].Name)
+				searchPage.addArtistToQueue(searchPage.artists[idx])
+				return nil
+			}
+			return event
 		case '/':
 			searchPage.ui.app.SetFocus(searchPage.searchField)
 			return nil
@@ -119,17 +125,23 @@ func (ui *Ui) createSearchPage() *SearchPage {
 			ui.app.SetFocus(searchPage.songList)
 			return nil
 		case tcell.KeyEnter:
-			idx := searchPage.albumList.GetCurrentItem()
-			searchPage.addAlbumToQueue(searchPage.albums[idx])
-			return nil
+			if len(searchPage.albums) != 0 {
+				idx := searchPage.albumList.GetCurrentItem()
+				searchPage.addAlbumToQueue(searchPage.albums[idx])
+				return nil
+			}
+			return event
 		}
 
 		switch event.Rune() {
 		case 'a':
-			idx := searchPage.albumList.GetCurrentItem()
-			searchPage.logger.Printf("albumList adding (%d) %s", idx, searchPage.albums[idx].Name)
-			searchPage.addAlbumToQueue(searchPage.albums[idx])
-			return nil
+			if len(searchPage.albums) != 0 {
+				idx := searchPage.albumList.GetCurrentItem()
+				searchPage.logger.Printf("albumList adding (%d) %s", idx, searchPage.albums[idx].Name)
+				searchPage.addAlbumToQueue(searchPage.albums[idx])
+				return nil
+			}
+			return event
 		case '/':
 			searchPage.ui.app.SetFocus(searchPage.searchField)
 			return nil
@@ -149,18 +161,24 @@ func (ui *Ui) createSearchPage() *SearchPage {
 			ui.app.SetFocus(searchPage.artistList)
 			return nil
 		case tcell.KeyEnter:
-			idx := searchPage.songList.GetCurrentItem()
-			ui.addSongToQueue(searchPage.songs[idx])
-			ui.queuePage.UpdateQueue()
-			return nil
+			if len(searchPage.artists) != 0 {
+				idx := searchPage.songList.GetCurrentItem()
+				ui.addSongToQueue(searchPage.songs[idx])
+				ui.queuePage.UpdateQueue()
+				return nil
+			}
+			return event
 		}
 
 		switch event.Rune() {
 		case 'a':
-			idx := searchPage.songList.GetCurrentItem()
-			ui.addSongToQueue(searchPage.songs[idx])
-			ui.queuePage.updateQueue()
-			return nil
+			if len(searchPage.artists) != 0 {
+				idx := searchPage.songList.GetCurrentItem()
+				ui.addSongToQueue(searchPage.songs[idx])
+				ui.queuePage.updateQueue()
+				return nil
+			}
+			return event
 		case '/':
 			searchPage.ui.app.SetFocus(searchPage.searchField)
 			return nil
