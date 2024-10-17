@@ -166,15 +166,12 @@ The default is `▉▊▋▌▍▎▏▎▍▌▋▊▉`. Set only one of these 
 
 ### Search Controls
 
-The search tab performs a server-side search for text in metadata name fields.
-The search results are filtered into three columns: artist, album, and song. 20
-results (in each column) are fetched at a time; use `n` to load more results.
+The search tab performs a server-side search for text in metadata name fields. The search results are filtered into three columns: artist, album, and song, where each entry matches the query in name or title.
 
 In any of the columns:
 
 - `/`: Focus search field.
 - `Enter` / `a`: Adds the selected item recursively to the queue.
-- `n`: Load more search results.
 - Left/right arrow keys (`←`, `→`) navigate between the columns
 - Up/down arrow keys (`↓`, `↑`) navigate the selected column list
 
