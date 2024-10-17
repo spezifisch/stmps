@@ -166,7 +166,7 @@ The default is `▉▊▋▌▍▎▏▎▍▌▋▊▉`. Set only one of these 
 
 ### Search Controls
 
-The search tab performs a server-side search for text in metadata name fields.
+The search page performs a server-side search for text in IDv3 metadata fields.
 The search results are filtered into three columns: artist, album, and song. 20
 results (in each column) are fetched at a time; use `n` to load more results.
 
@@ -182,6 +182,8 @@ In the search field:
 
 - `Enter`: Perform the query.
 - `Escape`: Escapes into the columns, where the global key bindings work.
+
+Note that the Search page is *not* a browser like the Browser page: it displays the search results returned by the server. Selecting a different artist will not change the album or song search results. OpenSubsonic servers implement the search function differently; in gonic, if you search for "black", you will get artists with "black" in their names in the artists column; albums with "black" in their titles in the albums column; and songs with "black" in their titles in the songs column. Navidrome appears to include all results with "black" anywhere in their IDv3 metadata. Since the API search results filteres these matches into sections -- artists, albums, and songs -- this means that, with Navidrome, you may see albums that don't have "black" in their names; maybe "black" is in their artist title.
 
 ## Advanced Configuration and Features
 
