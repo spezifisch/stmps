@@ -139,6 +139,9 @@ These controls are accessible from any view:
 - `j`: Move song down in queue
 - `s`: Save the queue as a playlist
 - `S`: Shuffle the songs in the queue
+- `l`: Load a queue previously saved to the server
+
+When stmps exits, the queue is automatically recorded to the server, including the position in the song being played. There is a *single* queue per user that can be thusly saved. Because empty queues can not be stored on Subsonic servers, this queue is not automatically loaded; the `l` binding on the queue page will load the previous queue and seek to the last position in the top song.
 
 If the currently playing song is moved, the music is stopped before the move, and must be re-started manually.
 

@@ -37,6 +37,7 @@ k     move selected song up in queue
 j     move selected song down in queue
 s     save queue as a playlist
 S     shuffle the current queue
+l     load last queue from server
 `
 
 const helpPagePlaylists = `

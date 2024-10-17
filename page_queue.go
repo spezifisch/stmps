@@ -110,6 +110,30 @@ func (ui *Ui) createQueuePage() *QueuePage {
 				queuePage.ui.ShowSelectPlaylist()
 			case 'S':
 				queuePage.shuffle()
+			case 'l':
+				go func() {
+					ssr, err := queuePage.ui.connection.LoadPlayQueue()
+					if err != nil {
+						queuePage.logger.Printf("unable to load play queue from server: %s", err)
+						return
+					}
+					queuePage.queueList.Clear()
+					queuePage.queueData.Clear()
+					if ssr.PlayQueue.Entries != nil {
+						for _, ent := range ssr.PlayQueue.Entries {
+							ui.addSongToQueue(&ent)
+						}
+						ui.queuePage.UpdateQueue()
+						if err := ui.player.Play(); err != nil {
+							queuePage.logger.Printf("error playing: %s", err)
+						}
+						if err = ui.player.Seek(ssr.PlayQueue.Position); err != nil {
+							queuePage.logger.Printf("unable to seek to position %s: %s", time.Duration(ssr.PlayQueue.Position)*time.Second, err)
+						}
+						_ = ui.player.Pause()
+					}
+				}()
+
 			default:
 				return event
 			}

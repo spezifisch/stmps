@@ -248,6 +248,11 @@ func (p *PlaylistPage) UpdatePlaylists() {
 		if err != nil {
 			p.logger.PrintError("GetPlaylists", err)
 		}
+		if response == nil {
+			p.logger.Printf("no error from GetPlaylists, but also no response!")
+			stop <- true
+			return
+		}
 		p.updatingMutex.Lock()
 		defer p.updatingMutex.Unlock()
 		p.ui.playlists = response.Playlists.Playlists
