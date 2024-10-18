@@ -4,7 +4,10 @@
 package main
 
 import (
+	"fmt"
+	"slices"
 	"sort"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -22,14 +25,11 @@ type SearchPage struct {
 	albumList   *tview.List
 	songList    *tview.List
 	searchField *tview.InputField
+	queryGenre  bool
 
 	artists []*subsonic.Artist
 	albums  []*subsonic.Album
 	songs   []*subsonic.SubsonicEntity
-
-	artistOffset int
-	albumOffset  int
-	songOffset   int
 
 	// external refs
 	ui     *Ui
@@ -46,7 +46,7 @@ func (ui *Ui) createSearchPage() *SearchPage {
 	searchPage.artistList = tview.NewList().
 		ShowSecondaryText(false)
 	searchPage.artistList.Box.
-		SetTitle(" artist ").
+		SetTitle(" artist matches ").
 		SetTitleAlign(tview.AlignLeft).
 		SetBorder(true)
 
@@ -54,7 +54,7 @@ func (ui *Ui) createSearchPage() *SearchPage {
 	searchPage.albumList = tview.NewList().
 		ShowSecondaryText(false)
 	searchPage.albumList.Box.
-		SetTitle(" album ").
+		SetTitle(" album matches ").
 		SetTitleAlign(tview.AlignLeft).
 		SetBorder(true)
 
@@ -62,7 +62,7 @@ func (ui *Ui) createSearchPage() *SearchPage {
 	searchPage.songList = tview.NewList().
 		ShowSecondaryText(false)
 	searchPage.songList.Box.
-		SetTitle(" song ").
+		SetTitle(" song matches ").
 		SetTitleAlign(tview.AlignLeft).
 		SetBorder(true)
 
@@ -101,15 +101,24 @@ func (ui *Ui) createSearchPage() *SearchPage {
 			searchPage.addArtistToQueue(searchPage.artists[idx])
 			return nil
 		case '/':
+			searchPage.searchField.SetLabel("search:")
 			searchPage.ui.app.SetFocus(searchPage.searchField)
 			return nil
-		case 'n':
-			searchPage.search()
+		case 'g':
+			if searchPage.queryGenre {
+				searchPage.albumList.SetTitle(" album matches ")
+			} else {
+				searchPage.populateGenres()
+				searchPage.albumList.SetTitle(fmt.Sprintf(" genres (%d) ", searchPage.albumList.GetItemCount()))
+				searchPage.ui.app.SetFocus(searchPage.albumList)
+			}
+			searchPage.queryGenre = !searchPage.queryGenre
 			return nil
 		}
 
 		return event
 	})
+	search := make(chan string, 5)
 	searchPage.albumList.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
 		case tcell.KeyLeft:
@@ -119,13 +128,35 @@ func (ui *Ui) createSearchPage() *SearchPage {
 			ui.app.SetFocus(searchPage.songList)
 			return nil
 		case tcell.KeyEnter:
-			idx := searchPage.albumList.GetCurrentItem()
-			searchPage.addAlbumToQueue(searchPage.albums[idx])
-			return nil
+			if !searchPage.queryGenre {
+				idx := searchPage.albumList.GetCurrentItem()
+				searchPage.addAlbumToQueue(searchPage.albums[idx])
+				return nil
+			} else {
+				search <- ""
+				searchPage.artistList.Clear()
+				searchPage.artists = make([]*subsonic.Artist, 0)
+				searchPage.songList.Clear()
+				searchPage.songs = make([]*subsonic.SubsonicEntity, 0)
+
+				idx := searchPage.albumList.GetCurrentItem()
+				// searchPage.logger.Printf("current item index = %d; albumList len = %d", idx, searchPage.albumList.GetItemCount())
+				queryStr, _ := searchPage.albumList.GetItemText(idx)
+				search <- queryStr
+				return nil
+			}
 		}
 
 		switch event.Rune() {
 		case 'a':
+			if searchPage.queryGenre {
+				idx := searchPage.albumList.GetCurrentItem()
+				if idx < searchPage.albumList.GetItemCount() {
+					genre, _ := searchPage.albumList.GetItemText(idx)
+					searchPage.addGenreToQueue(genre)
+				}
+				return nil
+			}
 			idx := searchPage.albumList.GetCurrentItem()
 			searchPage.logger.Printf("albumList adding (%d) %s", idx, searchPage.albums[idx].Name)
 			searchPage.addAlbumToQueue(searchPage.albums[idx])
@@ -133,8 +164,15 @@ func (ui *Ui) createSearchPage() *SearchPage {
 		case '/':
 			searchPage.ui.app.SetFocus(searchPage.searchField)
 			return nil
-		case 'n':
-			searchPage.search()
+		case 'g':
+			if searchPage.queryGenre {
+				searchPage.albumList.SetTitle(" album matches ")
+			} else {
+				searchPage.populateGenres()
+				searchPage.albumList.SetTitle(fmt.Sprintf(" genres (%d) ", searchPage.albumList.GetItemCount()))
+				searchPage.ui.app.SetFocus(searchPage.albumList)
+			}
+			searchPage.queryGenre = !searchPage.queryGenre
 			return nil
 		}
 
@@ -164,8 +202,15 @@ func (ui *Ui) createSearchPage() *SearchPage {
 		case '/':
 			searchPage.ui.app.SetFocus(searchPage.searchField)
 			return nil
-		case 'n':
-			searchPage.search()
+		case 'g':
+			if searchPage.queryGenre {
+				searchPage.albumList.SetTitle(" album matches ")
+			} else {
+				searchPage.populateGenres()
+				searchPage.albumList.SetTitle(fmt.Sprintf(" genres (%d) ", searchPage.albumList.GetItemCount()))
+				searchPage.ui.app.SetFocus(searchPage.albumList)
+			}
+			searchPage.queryGenre = !searchPage.queryGenre
 			return nil
 		}
 
@@ -184,61 +229,133 @@ func (ui *Ui) createSearchPage() *SearchPage {
 				ui.app.SetFocus(searchPage.artistList)
 			}
 		case tcell.KeyEnter:
+			search <- ""
 			searchPage.artistList.Clear()
 			searchPage.artists = make([]*subsonic.Artist, 0)
-			searchPage.albumList.Clear()
-			searchPage.albums = make([]*subsonic.Album, 0)
+			if !searchPage.queryGenre {
+				searchPage.albumList.Clear()
+				searchPage.albums = make([]*subsonic.Album, 0)
+			}
 			searchPage.songList.Clear()
 			searchPage.songs = make([]*subsonic.SubsonicEntity, 0)
 
-			searchPage.artistOffset = 0
-			searchPage.albumOffset = 0
-			searchPage.songOffset = 0
-			searchPage.search()
-			if len(searchPage.artists) > 0 {
-				ui.app.SetFocus(searchPage.artistList)
-			} else if len(searchPage.albums) > 0 {
-				ui.app.SetFocus(searchPage.albumList)
-			} else if len(searchPage.songs) > 0 {
-				ui.app.SetFocus(searchPage.songList)
-			}
+			queryStr := searchPage.searchField.GetText()
+			search <- queryStr
 		default:
 			return event
 		}
 		return nil
 	})
+	go searchPage.search(search)
 
 	return &searchPage
 }
 
-func (s *SearchPage) search() {
-	if len(s.searchField.GetText()) == 0 {
-		return
-	}
-	query := s.searchField.GetText()
+func (s *SearchPage) search(search chan string) {
+	var query string
+	var artOff, albOff, songOff int
+	more := make(chan bool, 5)
+	var res *subsonic.SubsonicResponse
+	var err error
+	for {
+		// quit searching if we receive an interrupt
+		select {
+		case query = <-search:
+			artOff = 0
+			albOff = 0
+			songOff = 0
+			for len(more) > 0 {
+				<-more
+			}
+			if query == "" {
+				continue
+			}
+		case <-more:
+		}
+		if s.queryGenre {
+			s.logger.Printf("genre %q %d", query, songOff)
+			res, err = s.ui.connection.GetSongsByGenre(query, songOff, "")
+			if len(res.SongsByGenre.Song) == 0 {
+				s.logger.Printf("found a total of %d songs", songOff)
+				continue
+			}
+		} else {
+			res, err = s.ui.connection.Search(query, artOff, albOff, songOff)
+			// Quit searching if there are no more results
+			if len(res.SearchResults.Artist) == 0 &&
+				len(res.SearchResults.Album) == 0 &&
+				len(res.SearchResults.Song) == 0 {
+				continue
+			}
+		}
+		if err != nil {
+			s.logger.PrintError("SearchPage.search", err)
+			return
+		}
 
-	res, err := s.ui.connection.Search(query, s.artistOffset, s.albumOffset, s.songOffset)
-	if err != nil {
-		s.logger.PrintError("SearchPage.search", err)
-		return
-	}
+		s.ui.app.QueueUpdate(func() {
+			if s.queryGenre {
+				if songOff == 0 {
+					s.artistList.Box.SetTitle(" artist matches ")
+				}
+				for _, song := range res.SongsByGenre.Song {
+					s.songList.AddItem(tview.Escape(song.Title), "", 0, nil)
+					s.songs = append(s.songs, &song)
+				}
+				s.songList.Box.SetTitle(fmt.Sprintf(" genre song matches (%d) ", len(s.songs)))
+				songOff += len(res.SongsByGenre.Song)
+			} else {
+				query = strings.ToLower(query)
+				for _, artist := range res.SearchResults.Artist {
+					if strings.Contains(strings.ToLower(artist.Name), query) {
+						s.artistList.AddItem(tview.Escape(artist.Name), "", 0, nil)
+						s.artists = append(s.artists, &artist)
+					}
+				}
+				s.artistList.Box.SetTitle(fmt.Sprintf(" artist matches (%d) ", len(s.artists)))
+				for _, album := range res.SearchResults.Album {
+					if strings.Contains(strings.ToLower(album.Name), query) {
+						s.albumList.AddItem(tview.Escape(album.Name), "", 0, nil)
+						s.albums = append(s.albums, &album)
+					}
+				}
+				s.albumList.Box.SetTitle(fmt.Sprintf(" album matches (%d) ", len(s.albums)))
+				for _, song := range res.SearchResults.Song {
+					if strings.Contains(strings.ToLower(song.Title), query) {
+						s.songList.AddItem(tview.Escape(song.Title), "", 0, nil)
+						s.songs = append(s.songs, &song)
+					}
+				}
+				s.songList.Box.SetTitle(fmt.Sprintf(" song matches (%d) ", len(s.songs)))
+				artOff += len(res.SearchResults.Artist)
+				albOff += len(res.SearchResults.Album)
+				songOff += len(res.SearchResults.Song)
+			}
+			more <- true
+		})
 
-	for _, artist := range res.SearchResults.Artist {
-		s.artistList.AddItem(tview.Escape(artist.Name), "", 0, nil)
-		s.artists = append(s.artists, &artist)
+		s.ui.app.Draw()
 	}
-	for _, album := range res.SearchResults.Album {
-		s.albumList.AddItem(tview.Escape(album.Name), "", 0, nil)
-		s.albums = append(s.albums, &album)
-	}
-	for _, song := range res.SearchResults.Song {
-		s.songList.AddItem(tview.Escape(song.Title), "", 0, nil)
-		s.songs = append(s.songs, &song)
-	}
+}
 
-	s.artistOffset += len(res.SearchResults.Artist)
-	s.albumOffset += len(res.SearchResults.Album)
-	s.songOffset += len(res.SearchResults.Song)
+func (s *SearchPage) addGenreToQueue(query string) {
+	var songOff int
+	for {
+		res, err := s.ui.connection.GetSongsByGenre(query, songOff, "")
+		if err != nil {
+			s.logger.PrintError("SearchPage.addGenreToQueue", err)
+			return
+		}
+		if len(res.SongsByGenre.Song) == 0 {
+			break
+		}
+		for _, song := range res.SongsByGenre.Song {
+			s.ui.addSongToQueue(&song)
+		}
+		songOff += len(res.SongsByGenre.Song)
+	}
+	s.logger.Printf("added a total of %d songs to the queue for %q", songOff, query)
+	s.ui.queuePage.UpdateQueue()
 }
 
 func (s *SearchPage) addArtistToQueue(entity subsonic.Ider) {
@@ -292,4 +409,18 @@ func (s *SearchPage) addAlbumToQueue(entity subsonic.Ider) {
 		s.ui.addSongToQueue(&e)
 	}
 	s.ui.queuePage.UpdateQueue()
+}
+
+func (s *SearchPage) populateGenres() {
+	resp, err := s.ui.connection.GetGenres()
+	if err != nil {
+		s.logger.PrintError("populateGenres", err)
+		return
+	}
+	slices.SortFunc(resp.Genres.Genres, func(a, b subsonic.GenreEntry) int {
+		return strings.Compare(a.Name, b.Name)
+	})
+	for _, entry := range resp.Genres.Genres {
+		s.albumList.AddItem(tview.Escape(entry.Name), "", 0, nil)
+	}
 }

@@ -125,6 +125,16 @@ type ScanStatus struct {
 	Count    int  `json:"count"`
 }
 
+type GenreEntries struct {
+	Genres []GenreEntry `json:"genre"`
+}
+
+type GenreEntry struct {
+	SongCount  int    `json:"songCount"`
+	AlbumCount int    `json:"albumCount"`
+	Name       string `json:"value"`
+}
+
 type Artist struct {
 	Id         string  `json:"id"`
 	Name       string  `json:"name"`
@@ -177,6 +187,7 @@ type SubsonicEntity struct {
 	DiscNumber  int      `json:"discNumber"`
 	Path        string   `json:"path"`
 	CoverArtId  string   `json:"coverArt"`
+	Year        int      `json:"year"`
 }
 
 func (s SubsonicEntity) ID() string {
@@ -271,6 +282,8 @@ type SubsonicResponse struct {
 	Album         Album             `json:"album"`
 	SearchResults SubsonicResults   `json:"searchResult3"`
 	ScanStatus    ScanStatus        `json:"scanStatus"`
+	Genres        GenreEntries      `json:"genres"`
+	SongsByGenre  SubsonicSongs     `json:"songsByGenre"`
 }
 
 type responseWrapper struct {
@@ -662,4 +675,31 @@ func (connection *SubsonicConnection) StartScan() error {
 		return fmt.Errorf("server returned false for scan status on scan attempt")
 	}
 	return nil
+}
+
+func (connection *SubsonicConnection) GetGenres() (*SubsonicResponse, error) {
+	query := defaultQuery(connection)
+	requestUrl := connection.Host + "/rest/getGenres" + "?" + query.Encode()
+	resp, err := connection.getResponse("GetGenres", requestUrl)
+	if err != nil {
+		return resp, err
+	}
+	return resp, nil
+}
+
+func (connection *SubsonicConnection) GetSongsByGenre(genre string, offset int, musicFolderID string) (*SubsonicResponse, error) {
+	query := defaultQuery(connection)
+	query.Add("genre", genre)
+	if offset != 0 {
+		query.Add("offset", strconv.Itoa(offset))
+	}
+	if musicFolderID != "" {
+		query.Add("musicFolderId", musicFolderID)
+	}
+	requestUrl := connection.Host + "/rest/getSongsByGenre" + "?" + query.Encode()
+	resp, err := connection.getResponse("GetPlaylists", requestUrl)
+	if err != nil {
+		return resp, err
+	}
+	return resp, nil
 }
