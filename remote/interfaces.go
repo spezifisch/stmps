@@ -28,7 +28,7 @@ type ControlledPlayer interface {
 	Play() error
 	Pause() error
 	Stop() error
-	SeekAbsolute(float64) error
+	SeekAbsolute(int) error
 	NextTrack() error
 	PreviousTrack() error
 

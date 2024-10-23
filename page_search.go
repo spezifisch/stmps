@@ -67,16 +67,19 @@ func (ui *Ui) createSearchPage() *SearchPage {
 	// search bar
 	searchPage.searchField = tview.NewInputField().
 		SetLabel("search:").
-		SetFieldBackgroundColor(tcell.ColorBlack)
+		SetFieldBackgroundColor(tcell.ColorBlack).
+		SetDoneFunc(func(key tcell.Key) {
+			searchPage.aproposFocus()
+		})
 
 	searchPage.columnsFlex = tview.NewFlex().SetDirection(tview.FlexColumn).
-		AddItem(searchPage.artistList, 0, 1, false).
+		AddItem(searchPage.artistList, 0, 1, true).
 		AddItem(searchPage.albumList, 0, 1, false).
 		AddItem(searchPage.songList, 0, 1, false)
 
 	searchPage.Root = tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(searchPage.columnsFlex, 0, 1, false).
-		AddItem(searchPage.searchField, 1, 1, true)
+		AddItem(searchPage.columnsFlex, 0, 1, true).
+		AddItem(searchPage.searchField, 1, 1, false)
 
 	searchPage.artistList.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
@@ -164,15 +167,7 @@ func (ui *Ui) createSearchPage() *SearchPage {
 	searchPage.searchField.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
 		case tcell.KeyUp, tcell.KeyESC:
-			if len(searchPage.artists) != 0 {
-				ui.app.SetFocus(searchPage.artistList)
-			} else if len(searchPage.albums) != 0 {
-				ui.app.SetFocus(searchPage.albumList)
-			} else if len(searchPage.songs) != 0 {
-				ui.app.SetFocus(searchPage.songList)
-			} else {
-				ui.app.SetFocus(searchPage.artistList)
-			}
+			searchPage.aproposFocus()
 		case tcell.KeyEnter:
 			search <- ""
 			searchPage.artistList.Clear()
@@ -310,4 +305,16 @@ func (s *SearchPage) addAlbumToQueue(entity subsonic.Ider) {
 		s.ui.addSongToQueue(&e)
 	}
 	s.ui.queuePage.UpdateQueue()
+}
+
+func (s *SearchPage) aproposFocus() {
+	if len(s.artists) != 0 {
+		s.ui.app.SetFocus(s.artistList)
+	} else if len(s.albums) != 0 {
+		s.ui.app.SetFocus(s.albumList)
+	} else if len(s.songs) != 0 {
+		s.ui.app.SetFocus(s.songList)
+	} else {
+		s.ui.app.SetFocus(s.artistList)
+	}
 }

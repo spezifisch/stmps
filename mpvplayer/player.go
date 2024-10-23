@@ -376,8 +376,8 @@ func (p *Player) IsSeeking() (bool, error) {
 	return false, nil
 }
 
-func (p *Player) SeekAbsolute(float64) error {
-	return nil
+func (p *Player) SeekAbsolute(position int) error {
+	return p.instance.Command([]string{"seek", strconv.Itoa(position), "absolute"})
 }
 
 func (p *Player) Play() error {

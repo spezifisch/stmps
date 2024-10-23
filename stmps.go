@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"runtime"
+	"runtime/debug"
 	"runtime/pprof"
 
 	"github.com/spezifisch/stmps/logger"
@@ -23,6 +24,9 @@ import (
 var osExit = os.Exit  // A variable to allow mocking os.Exit in tests
 var headlessMode bool // This can be set to true during tests
 var testMode bool     // This can be set to true during tests, too
+const DEVELOPMENT = "development"
+
+var Version string = DEVELOPMENT
 
 func readConfig(configFile *string) error {
 	required_properties := []string{"auth.username", "auth.password", "server.host"}
@@ -108,11 +112,21 @@ func main() {
 	cpuprofile := flag.String("cpuprofile", "", "write cpu profile to `file`")
 	memprofile := flag.String("memprofile", "", "write memory profile to `file`")
 	configFile := flag.String("config", "", "use config `file`")
+	version := flag.Bool("version", false, "print the stmps version and exit")
 
 	flag.Parse()
 	if *help {
 		fmt.Printf("USAGE: %s <args> [[user:pass@]server:port]\n", os.Args[0])
 		flag.Usage()
+		osExit(0)
+	}
+	if Version == DEVELOPMENT {
+		if bi, ok := debug.ReadBuildInfo(); ok {
+			Version = bi.Main.Version
+		}
+	}
+	if *version {
+		fmt.Printf("stmps %s", Version)
 		osExit(0)
 	}
 

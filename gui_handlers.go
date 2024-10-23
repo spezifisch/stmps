@@ -4,6 +4,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/spezifisch/stmps/mpvplayer"
 	"github.com/spezifisch/stmps/subsonic"
@@ -114,10 +116,26 @@ func (ui *Ui) handlePageInput(event *tcell.EventKey) *tcell.EventKey {
 func (ui *Ui) ShowPage(name string) {
 	ui.pages.SwitchToPage(name)
 	ui.menuWidget.SetActivePage(name)
+	_, prim := ui.pages.GetFrontPage()
+	ui.app.SetFocus(prim)
 }
 
 func (ui *Ui) Quit() {
-	// TODO savePlayQueue/getPlayQueue
+	if len(ui.queuePage.queueData.playerQueue) > 0 {
+		ids := make([]string, len(ui.queuePage.queueData.playerQueue))
+		for i, it := range ui.queuePage.queueData.playerQueue {
+			ids[i] = it.Id
+		}
+		// stmps always only ever plays the first song in the queue
+		pos := ui.player.GetTimePos()
+		if err := ui.connection.SavePlayQueue(ids, ids[0], int(pos)); err != nil {
+			log.Printf("error stashing play queue: %s", err)
+		}
+	} else {
+		// The only way to purge a saved play queue is to force an error by providing
+		// bad data. Therefore, we ignore errors.
+		_ = ui.connection.SavePlayQueue([]string{"XXX"}, "XXX", 0)
+	}
 	ui.player.Quit()
 	ui.app.Stop()
 }

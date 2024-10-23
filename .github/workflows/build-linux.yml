@@ -6,6 +6,9 @@ on:
       - "*.md"
   workflow_dispatch:
 
+env:
+  TERMSHOT_VERSION: "0.2.10"
+
 jobs:
   build:
     strategy:
@@ -17,7 +20,7 @@ jobs:
           - ubuntu-latest
         go:
           - "1.22"
-          - "1.23"
+          - "stable"
         architecture:
           - amd64
           - arm64
@@ -75,8 +78,41 @@ jobs:
         run: go build -o stmps-linux-${{ matrix.architecture }}
 
       - name: Upload binary as artifact
-        if: matrix.go == 'stable' && matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest' && matrix.go == 'stable' && matrix.architecture == 'amd64'
         uses: actions/upload-artifact@v4
         with:
           path: stmps-linux-${{ matrix.architecture }}
           name: stmps-linux-${{ matrix.architecture }}
+
+  screenshot:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download and unpack termshot
+        run: |
+          wget https://github.com/homeport/termshot/releases/download/v${{ env.TERMSHOT_VERSION }}/termshot_${{ env.TERMSHOT_VERSION }}_linux_amd64.tar.gz
+          tar -xzf termshot_${{ env.TERMSHOT_VERSION }}_linux_amd64.tar.gz
+          chmod +x termshot
+
+      - name: Download binary from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: stmps-linux-amd64
+          path: .
+
+      - name: Make binary executable and rename it
+        run: |
+          chmod +x stmps-linux-amd64
+          mv stmps-linux-amd64 ./stmps
+
+      - name: Run and screenshot STMPS
+        run: |
+          ./termshot ./stmps --output stmps_screenshot.png
+        continue-on-error: true
+
+      - name: Upload screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: stmps_screenshot
+          path: stmps_screenshot.png

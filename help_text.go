@@ -37,6 +37,7 @@ k     move selected song up in queue
 j     move selected song down in queue
 s     save queue as a playlist
 S     shuffle the current queue
+l     load last queue from server
 `
 
 const helpPagePlaylists = `
@@ -46,13 +47,16 @@ a     add playlist or song to queue
 `
 
 const helpSearchPage = `
-artist, album, or song tab
-  Down    focus search field
+artist, album, or song column
+  Down/Up navigate within the column
   Left    previous column
   Right   next column
-  Enter   recursively add item to quue
-  a       recursively add item to quue
+  Enter/a recursively add item to quue
   /       start search
 search field
   Enter   search for text
+  Esc     cancel search
+
+Note: unlike browser, columns navigate
+ search results, not selected items.
 `

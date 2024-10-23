@@ -106,6 +106,9 @@ func InitGui(indexes *[]subsonic.SubsonicIndex,
 		SetTextAlign(tview.AlignLeft).
 		SetDynamicColors(true).
 		SetScrollable(false)
+	ui.startStopStatus.SetMouseCapture(func(action tview.MouseAction, event *tcell.EventMouse) (tview.MouseAction, *tcell.EventMouse) {
+		return action, nil
+	})
 
 	statusRight := formatPlayerStatus(0, 0, 0)
 	ui.playerStatus = tview.NewTextView().SetText(statusRight).
