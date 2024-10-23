@@ -52,9 +52,7 @@ artist, album, or song column
   Left    previous column
   Right   next column
   Enter/a recursively add item to quue
-  /       start search (20 results per)
-  n       load more results
-
+  /       start search
 search field
   Enter   search for text
   Esc     cancel search
